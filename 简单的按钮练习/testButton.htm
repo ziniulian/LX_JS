@@ -1,0 +1,50 @@
+<html>
+	<head>
+		<title>testButton</title>
+		<meta charset="utf-8" />
+		<style type="text/css">
+			.button {
+				-webkit-user-select:none;
+				-moz-user-select:none;
+				-ms-user-select:none;
+				user-select:none;
+
+				font-family: "微软雅黑";
+				font-size: 50px;
+				text-align: center;
+				line-height: 160px;
+				color: #333;
+
+				width: 160px;
+				height: 160px;
+				cursor: pointer;
+
+				background-image: url(button0.jpg);
+				background-repeat: no-repeat;
+				background-position: center center;
+				background-size: 100% 100%;
+			}
+			.button_down {
+				background-image: url(button1.jpg);
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="button" class="button">按下</div>
+	</body>
+
+	<script>
+		button.onmousedown = function () {
+			button.innerHTML = "松开";
+			button.className = "button button_down";
+		}
+		button.onmouseup = function () {
+			button.innerHTML = "按下";
+			button.className = "button";
+		}
+		button.onclick = function () {
+			alert("click");
+		}
+	</script>
+</html>
