@@ -1,0 +1,97 @@
+<html>
+	<head>
+		<title>对数字、布尔等类型使用数组下标测试</title>
+		<meta charset="utf-8" />
+
+		<style type="text/css">
+			body {
+				padding: 0;
+				margin: 0;
+			}
+		</style>
+
+		<script type="text/javascript">
+			function init () {
+				// 布尔
+				console.log ("\n布尔：---------");
+				var a = true;
+				a.b = 11;
+				a["c"] = 22;
+				console.log (a);
+				console.log (a.b);
+				console.log (a["c"]);
+				console.log (a[0]);
+
+				// 数字
+				console.log ("\n数字：---------");
+				a = 999;
+				a.b = 11;
+				a["c"] = 22;
+				console.log (a);
+				console.log (a.b);
+				console.log (a["c"]);
+				console.log (a[0]);
+
+				// 字符串
+				console.log ("\n字符串：---------");
+				a = "hsjd";
+				a.b = 11;
+				a["c"] = 22;
+				console.log (a);
+				console.log (a.b);
+				console.log (a["c"]);
+				console.log (a[0]);
+				console.log (a.length);
+				console.log (a["1"]);
+				console.log (a[2]);
+
+				// 函数
+				console.log ("\n 函数 ：---------");
+				a = function () {
+					console.log ("Hello World!");
+					return "End!";
+				};
+				a.b = 11;
+				a["c"] = 22;
+				console.log (a);
+				console.log (a.b);
+				console.log (a["c"]);
+				console.log (a[0]);
+				console.log (a.length);
+				console.log (a());
+
+				// 对象
+				console.log ("\n 对象 ：---------");
+				a = {};
+				a.b = 11;
+				a["c"] = 22;
+				console.log (a);
+				console.log (a.b);
+				console.log (a["c"]);
+				console.log (a.length);
+
+				// 空值
+				console.log ("\n 空值 ：---------");
+				a = null;
+				// a.b = 11;
+				// a["c"] = 22;
+				console.log (a);
+				// console.log (a.b);
+				// console.log (a["c"]);
+
+				// 没值
+				console.log ("\n 对象 ：---------");
+				a = undefined;
+				// a.b = 11;
+				// a["c"] = 22;
+				console.log (a);
+				// console.log (a.b);
+				// console.log (a["c"]);
+
+				console.log ("\n\n----------- 总结 ------------ \n测试表明： \n只有 null 和 undefined 在使用数组下标时会异常； \n布尔、数字等类型会不会抛出异常，只会返回 undefined");
+			}
+		</script>
+	</head>
+
+	<body onload="init();"></body>
+</html>
