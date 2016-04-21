@@ -1,6 +1,6 @@
 // LZR.HTML5.loadJs([ LZR.HTML5.jsPath + "HTML5/Bp/AirqMg/RegStat.js" ]);
 
-// ----------- 区域形势 ------------
+// ----------- ------------
 
 LZR.HTML5.loadJs([
 	LZR.HTML5.jsPath + "util/Date.js",
@@ -68,20 +68,6 @@ LZR.HTML5.Bp.AirqMg.RegStat = function (obj) {
 	LZR.HTML5.Util.mateWidth (obj.map);
 	obj.map.style.cursor = "crosshair";
 	this.map = new LZR.HTML5.Canvas.LayerManager (obj.map);
-	this.map.max.reset({
-		// width: 1112,
-		// height: 866
-
-		// 火狐缩放未解决的临时处理办法：将图片割去一个像素的边。
-		top: 1,
-		left: 1,
-		width: 1438,
-		height: 1118
-	});
-	this.map.s.top = 1;
-	this.map.s.left = 1;
-	this.map.s.w = this.map.max.w;
-	this.map.s.reHeight();
 	this.map.min.reset({
 		width: 100,
 		height: 100
@@ -191,13 +177,24 @@ LZR.HTML5.Bp.AirqMg.RegStat = function (obj) {
 		dlat: 8
 	};
 
+	// 地图初始范围
+	this.mapArea = null;
+/*
+	// 范围举例
+	this.mapArea = {
+		top: 0,
+		left: 0,
+		width: 100
+	};
+*/
+
 	// 时效起始时间
 	this.periodStart = 4;
 
 	// 各图层的图片下载器
 	this.layersLoader = [];
 
-	// 分布图图片—— 0
+	// 图片—— 0
 	var ayid = 0;
 	this.layersLoader[ayid] = new LZR.HTML5.Canvas.ImgLoader( LZR.bind (this, this.onLayersLoad, ayid) );
 	this.layersLoader[ayid].finished = LZR.bind (this, function () {
@@ -209,16 +206,18 @@ LZR.HTML5.Bp.AirqMg.RegStat = function (obj) {
 	this.createLayersLoader ();
 
 	// webSocket 连接信息
-	// this.wsInfo = {	// Base64 方式
-	// 	url: "ws://192.168.1.211:8989",	// Websocket 服务路径
-	// 	typ: "picContent",	// 马远接口的typ值
-	// 	pre: "data:image/jpeg;base64,",	// 图片路径前缀
-	// 	fld: "Byte64"		// 马远接口的图片路径值
-	// };
-	this.wsInfo = {		// URL 方式
+/*
+	this.wsInfo = {	// Base64 方式
 		url: "ws://192.168.1.211:8989",	// Websocket 服务路径
+		typ: "picContent",	// 马远接口的typ值
+		pre: "data:image/jpeg;base64,",	// 图片路径前缀
+		fld: "Byte64"		// 马远接口的图片路径值
+	};
+*/
+	this.wsInfo = {		// URL 方式
+		url: "ws://192.168.1.130:8901",	// Websocket 服务路径
 		typ: "picURL",		// 马远接口的typ值
-		pre: "http://192.168.1.101/imgServer/figure/figure/",	// 图片路径前缀
+		pre: "http://192.168.1.101/imgServer/picService?type=1&path=",	// 图片路径前缀
 		fld: "URL"		// 马远接口的图片路径值
 	};
 
@@ -226,7 +225,7 @@ LZR.HTML5.Bp.AirqMg.RegStat = function (obj) {
 	LZR.HTML5.Util.Event.addEvent (window, "resize", LZR.bind(this, this.resize), false);
 };
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.className = "LZR.HTML5.Bp.AirqMg.RegStat";
-LZR.HTML5.Bp.AirqMg.RegStat.prototype.version = "0.0.7";
+LZR.HTML5.Bp.AirqMg.RegStat.prototype.version = "0.0.8";
 
 // 初始化
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.init = function () {
@@ -252,7 +251,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.initTbn = function () {
 		this.tbn.count = Math.ceil((24 - this.condition.tim) / this.hourStep);
 		this.tbn.count += Math.floor(24 * (this.dayNum - 1) / this.hourStep);
 		this.tbn.ctx.font=this.tbnFont[1].font;
-		this.tbn.wheelScale = 10;
+		this.tbn.wheelScale = 3;
 		this.tbn.wheelStyle = 2;
 		this.tbn.draw = LZR.bind (this, function (tb, i, x, y, w, h) {
 			tb.ctx.fillText( tb.imgs[i].tim, (x+this.tbnFont[1].left) , (y + h + this.tbnFont[1].bottom));
@@ -348,21 +347,78 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.loadMaps = function (url) {
 
 // 地图底图加载后回调内容
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.onMaps = function (index, img) {
-		// 防止图层重复加载而清空元素
-		this.map.layers = [];
-		this.tbn.imgs = [];
+	// 初始图片范围
+	this.hdMapArea (img, true);
 
-		// 填充图层
-		this.fillLayers(img);
+	// 防止图层重复加载而清空元素
+	this.map.layers = [];
+	this.tbn.imgs = [];
 
-		// 启动控制
-		this.ctrlStart();
+	// 填充图层
+	this.fillLayers(img);
 
-		// 加载分布图
-		this.loadLayers(0);
+	// 启动控制
+	this.ctrlStart();
 
-		// 回调
-		this.mapFinished();
+	// 加载
+	this.loadLayers(0);
+
+	// 回调
+	this.mapFinished();
+};
+
+// 图片居中
+LZR.HTML5.Bp.AirqMg.RegStat.prototype.hdMapLimitCenter = function (p) {
+	if (!p) {
+		p = this.map.layers[1].obj;
+	}
+	this.map.resetMax (0, 0, p.width, p.height);
+	this.map.max.rrByParent (this.map.s);
+	this.map.s.w *= this.map.max.baseW / this.map.max.w;
+	this.map.s.reHeight();
+	this.map.max.w = this.map.max.baseW;
+	this.map.max.reHeight();
+	this.map.s.alineInParent ("center", this.map.max);
+};
+
+// 初始图片范围
+LZR.HTML5.Bp.AirqMg.RegStat.prototype.hdMapArea = function (p, initMap) {
+	if (initMap && p) {
+		this.map.resetMax (0, 0, p.width, p.height);
+		this.map.s.top = 0;
+		this.map.s.left = 0;
+		this.map.s.w = this.map.max.w;
+		this.map.s.reHeight();
+	}
+	if (this.mapArea) {
+		if (this.mapArea === "center") {
+			this.hdMapLimitCenter(p);
+		} else {
+			this.map.s.top = this.mapArea.top;
+			this.map.s.left = this.mapArea.left;
+			this.map.s.w = this.mapArea.width;
+			this.map.s.reHeight();
+		}
+	}
+};
+
+// 原比例显示图片
+LZR.HTML5.Bp.AirqMg.RegStat.prototype.oneScale = function () {
+
+	if (this.map.s.left<0 || this.map.s.left > this.map.max.w) {
+		this.map.s.left = 0;
+	}
+	if (this.map.s.top<0 || this.map.s.top > this.map.max.h) {
+		this.map.s.top = 0;
+	}
+
+	this.map.s.w = this.map.canvas.width;
+	this.map.s.reHeight();
+/*
+	if (this.map.s.left<0 || this.map.s.left > this.map.max.baseW) {
+		this.map.s.alineInParent ("center", this.map.max);
+	}
+*/
 };
 
 // 生成图层下载器
@@ -428,7 +484,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.createImg = function (index, d) {
 	return r;
 };
 
-// 加载分布图
+// 加载
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.loadLayers = function (id) {
 	var typ, mod;
 	var d = {
@@ -439,7 +495,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.loadLayers = function (id) {
 	this.layersLoader[id].closeWebSocket();
 
 	switch (id) {
-		case 0:	// 分布图
+		case 0:	// 
 			typ = this.condition.fom[this.condition.ttyp];
 			mod = this.condition.mod;
 			this.createTbnQry (d, typ, mod);
@@ -455,7 +511,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.loadLayers = function (id) {
 	this.layersLoader[id].addByWebSocket (this.wsInfo, d);
 };
 
-// 生成分布图查询条件
+// 生成查询条件
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.createTbnQry = function (qry, typ, mod) {
 	return this.createWeatherQry (qry, typ, mod);
 };
@@ -473,7 +529,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.createWeatherQry = function (qry, typ, mod
 	return qry;
 };
 
-// 分布图加载回调内容
+// 加载回调内容
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.onLayersLoad = function (id, index, img) {
 	var ms = this.tbn.imgs[index];
 	if (ms) {
@@ -498,7 +554,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.changeTitle = function () {
 				this.condition.fomName +
 				this.condition.areaName +
 				// this.condition.ttypName +
-				"区域形势 <sub>（产品时间：" +
+				"区域 形势<sub>（产品时间：" +
 				this.condition.dateName + " " +
 				this.condition.timName +
 				"）</sub >";
@@ -1001,7 +1057,7 @@ LZR.HTML5.Bp.AirqMg.RegStat.prototype.isBusyInLayersLoader = function (index) {
 // 地图加载完时的接口
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.mapFinished = function () {};
 
-// 分布图加载完时的接口
+// 加载完时的接口
 LZR.HTML5.Bp.AirqMg.RegStat.prototype.tbnFinished = function () {};
 
 // 其它图层加载完时的接口
