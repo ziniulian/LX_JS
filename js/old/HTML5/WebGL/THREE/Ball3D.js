@@ -3,7 +3,7 @@
 // ---------------- 3D球控制场景 -----------------------
 if (!window.THREE) {
 	LZR.HTML5.loadJs([
-		LZR.HTML5.jsPath + "HTML5/expand/threejs/three.min.js",
+		LZR.HTML5.jsPath + "HTML5/expand/threejs/three.js",
 		LZR.HTML5.jsPath + "HTML5/expand/threejs/OBJLoader.js",
 		LZR.HTML5.jsPath + "HTML5/expand/threejs/TrackballControls.js"
 	]);

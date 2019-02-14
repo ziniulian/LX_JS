@@ -37,7 +37,7 @@ LZR.HTML5.WebGL.Three.BoxMap = function (obj) {
 	this.max = 0;
 };
 LZR.HTML5.WebGL.Three.BoxMap.prototype.className = "LZR.HTML5.WebGL.Three.BoxMap";
-LZR.HTML5.WebGL.Three.BoxMap.prototype.version = "0.0.2";
+LZR.HTML5.WebGL.Three.BoxMap.prototype.version = "0.0.5";
 
 // 初始化地图
 LZR.HTML5.WebGL.Three.BoxMap.prototype.initMap = function() {
@@ -106,11 +106,6 @@ LZR.HTML5.WebGL.Three.BoxMap.prototype.initCav = function (backColor) {
 		fov: 75,
 		minCtrlDistance: 10,
 		maxCtrlDistance: this.max,
-		cameraPosition: {
-			x: 0,
-			y: -this.max/2,
-			z: this.max/2.5
-		},
 		backColor: backColor,
 		canvas: this.cav
 	});
@@ -138,7 +133,7 @@ LZR.HTML5.WebGL.Three.BoxMap.prototype.initCtrl = function (div, strip, btn) {
 		this.box.ctrl[s] = new LZR.HTML5.Util.Scroll({
 			count: 100,
 			position: this.box.obj[s].getAlpha() * 100,
-			direction: 1,
+			direction: 2,
 			autoLen: 1,
 			autoMin: 30,
 			padd: 0,
@@ -252,6 +247,43 @@ LZR.HTML5.WebGL.Three.BoxMap.prototype.setAlpha = function (facNam, alpha) {
 	}
 };
 
+// 相机位置设置
+LZR.HTML5.WebGL.Three.BoxMap.prototype.setCamera = function (facNam) {
+	switch (facNam) {
+		case "top":
+			this.wb.camera.up.x = 0;
+			this.wb.camera.up.y = 1;
+			this.wb.camera.up.z = 0;
+			// this.wb.camera.position.set(0, -this.box.h/5, this.box.z*2.1);
+			this.wb.camera.position.set(0, -this.box.h/1.8, this.box.z*2.2);
+			break;
+		case "east":
+			this.wb.camera.up.x = -1;
+			this.wb.camera.up.y = 0;
+			this.wb.camera.up.z = 0;
+			this.wb.camera.position.set(this.box.w*1.2, 0, this.box.z*1.1);
+			break;
+		case "west":
+			this.wb.camera.up.x = 1;
+			this.wb.camera.up.y = 0;
+			this.wb.camera.up.z = 0;
+			this.wb.camera.position.set(-this.box.w*1.2, 0, this.box.z*1.1);
+			break;
+		case "south":
+			this.wb.camera.up.x = 0;
+			this.wb.camera.up.y = 1;
+			this.wb.camera.up.z = 0;
+			this.wb.camera.position.set(0, -this.box.h*1.2, this.box.z*1.1);
+			break;
+		case "north":
+			this.wb.camera.up.x = 0;
+			this.wb.camera.up.y = -1;
+			this.wb.camera.up.z = 0;
+			this.wb.camera.position.set(0, this.box.h*1.2, this.box.z*1.1);
+			break;
+	}
+};
+
 // 刷新图片
 LZR.HTML5.WebGL.Three.BoxMap.prototype.flush = function (imgUrl) {
 	/**
@@ -284,4 +316,79 @@ LZR.HTML5.WebGL.Three.BoxMap.prototype.flush = function (imgUrl) {
 		this.map.obj.material.map = THREE.ImageUtils.loadTexture (imgUrl.map);
 		this.map.data = imgUrl.map;
 	}
+};
+
+// 画箭头（两点式）
+LZR.HTML5.WebGL.Three.BoxMap.prototype.drawArrow2 = function (dat) {
+	var d, i, l;
+	this.wb.removeMesh( "arrow");
+	var arrow = new THREE.Mesh();
+
+	for (i=0; i<dat.length; i++) {
+		d = new THREE.Vector3((dat[i][3] - dat[i][0]), (dat[i][4] - dat[i][1]), (dat[i][5] - dat[i][2]));
+		l = d.length();
+		arrow.add(new THREE.ArrowHelper(
+			d.normalize(),
+			new THREE.Vector3(dat[i][0], dat[i][1], dat[i][2]),
+			l,
+			0xFF0000
+		));
+	}
+
+	this.wb.appendMesh("arrow",  arrow);
+};
+
+// 画箭头
+LZR.HTML5.WebGL.Three.BoxMap.prototype.drawArrow = function (dat, nam) {
+	this.wb.removeMesh(nam);
+	var arrow = new THREE.Mesh();
+
+	for (var i=0; i<dat.length; i++) {
+		arrow.add(new THREE.ArrowHelper(
+			new THREE.Vector3(dat[i][3], dat[i][4], dat[i][5]),
+			new THREE.Vector3(dat[i][0], dat[i][1], dat[i][2]),
+			dat[i][6],
+			0xFF0000,
+			0.3 * dat[i][6],
+			0.22 * dat[i][6]
+		));
+	}
+
+	this.wb.appendMesh(nam,  arrow);
+};
+
+// 清空箭头
+LZR.HTML5.WebGL.Three.BoxMap.prototype.clearArrow = function (nam) {
+	this.wb.removeMesh (nam);
+};
+
+// 画平面
+LZR.HTML5.WebGL.Three.BoxMap.prototype.drawPlan = function (img, z, nam) {
+	this.wb.removeMesh(nam);
+
+	var g = new THREE.PlaneGeometry(this.map.w, this.map.h);
+	g.vertices[0].x = -this.center.x;
+	g.vertices[0].y = this.center.y;
+	g.vertices[0].z = z;
+	g.vertices[1].x = this.map.w - this.center.x;
+	g.vertices[1].y = this.center.y;
+	g.vertices[1].z = z;
+	g.vertices[2].x = -this.center.x;
+	g.vertices[2].y = this.center.y - this.map.h;
+	g.vertices[2].z = z;
+	g.vertices[3].x = this.map.w - this.center.x;
+	g.vertices[3].y = this.center.y - this.map.h;
+	g.vertices[3].z = z;
+
+	var m = new THREE.Mesh (
+		g,
+		new THREE.MeshBasicMaterial ({
+			map:THREE.ImageUtils.loadTexture (img),
+			side:THREE.DoubleSide,
+			// overdraw:true,
+			transparent:true
+		})
+	);
+
+	this.wb.appendMesh(nam,  m);
 };
